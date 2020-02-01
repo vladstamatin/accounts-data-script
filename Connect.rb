@@ -19,28 +19,30 @@ class Accounts
   end
 end
 
-def get_accounts_data
   # Initalize the Browser
   browser = Watir::Browser.new :firefox
   # Navigate to Page
   browser.goto 'http://demo.bendigobank.com.au'
   # Navigate to Demo page
   browser.button(name: 'customer_type').click
-  name = Array[]
-  accounts = Array[]
 
+  accounts = Array[]
   i=0
+
   list = browser.ol(class: 'grouped-list__group__items')
   list.lis.each do |li|
-    name[i] = li.div(class: '_3jAwGcZ7sr').text
-    account = Accounts.new(name[i],"text","text","text","text").to_hash
+
+    name = li.div(class: '_3jAwGcZ7sr').text
+    currency = li.dd(class: 'S3CFfX95_8').span(index: 1).text
+    balance = currency
+    nature = "credit_card"
+    transactions = Array[]
+    
+    account = Accounts.new(name,currency[0],balance[1..-1],nature,transactions).to_hash
+
     accounts[i] = account
     hashacc = {"accounts":[accounts[i]]}
-    puts (hashacc.to_json)
+    puts ("\n" + hashacc.to_json)
     i+=1
-end
+  end
 browser.close
-
-end
-
-get_accounts_data
