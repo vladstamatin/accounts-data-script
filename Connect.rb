@@ -47,11 +47,6 @@ end
       nature = "credit_card"
       transactions = Array[]
 
-      account = Accounts.new(name,currency[0],balance[1..-1],nature,transactions).to_hash
-
-      hashacc = {"accounts":[account]}
-      puts ("\n" + hashacc.to_json)
-
       li.a(class: 'g9Ab3g8sIZ').click
       browser.i(class: 'ico-nav-bar-filter_16px').click
       browser.a(class: 'panel--bordered__item').click
@@ -76,15 +71,17 @@ end
            amountCredit = li.span(class: 'amount credit')
            amountDebit.exists? == true ? amount = "-"+amountDebit.text : amount = "+"+amountCredit.text
 
-          transactions = Transactions.new(date.text,description,amount,currency[0],name).to_hash
+          transactions.push(Transactions.new(date.text,description,amount,currency[0],name).to_hash)
 
-          hashtr = {"transactions":[transactions]}
-          puts (hashtr.to_json)
          end
         end
       else state = false
       end
       puts ("\n\n\n" )
+      account = Accounts.new(name,currency[0],balance[1..-1],nature,transactions).to_hash
+      hashacc = {"accounts":[account]}
+
+      puts JSON.pretty_generate(hashacc)
     end
   browser.close
 
