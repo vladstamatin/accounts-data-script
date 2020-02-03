@@ -1,8 +1,5 @@
 require 'watir'
-require 'webdrivers'
-require 'faker'
 require 'json'
-require 'nokogiri'
 
 class Accounts
   attr_accessor :name, :currency, :balance, :nature, :transactions
