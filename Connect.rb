@@ -1,4 +1,6 @@
 require 'watir'
+require 'webdrivers'
+require 'faker'
 require 'json'
 require 'nokogiri'
 
@@ -29,55 +31,59 @@ class Transactions < Accounts
   end
 end
 
-  def get_accounts_data
+class GetAccountsData
     Watir.logger.ignore :deprecations
+    #navigate to webpage
     browser = Watir::Browser.new :firefox
     browser.goto 'http://demo.bendigobank.com.au'
     browser.button(name: 'customer_type').click
+    #parse accounts related data and iterate over it
     accounts_list = browser.ol(class: 'grouped-list__group__items')
-
     accounts_list.lis.each do |li|
+      #get data for account class object
       name = li.div(class: '_3jAwGcZ7sr').text
       currency = li.dd(class: 'S3CFfX95_8').span(index: 1).text
       balance = currency
       nature = "credit_card"
       transactions = Array[]
-
-      li.a(class: 'g9Ab3g8sIZ').click
+      #navigate to select last month for transactions
+      li.a(class: 'g9Ab3g8sIZ').click #navigate to each account
       browser.i(class: 'ico-nav-bar-filter_16px').click
       browser.a(class: 'panel--bordered__item').click
       browser.ul(class: 'radio-group').li(index: 6).click
       browser.button(class: 'button--primary').click
       browser.a(class: '_2wUV-453gB').wait_until(&:present?)
-
-      state = true
-      if state == true
+      #parse transactions related data and iterate over it
+      tstate = true
+      if tstate == true
       transactions_list = browser.ol(class: 'grouped-list grouped-list--compact grouped-list--indent')
       end
-
       if transactions_list.exists? == true
         transactions_list.lis.each do |li|
+         #get data time for transactions made in one day
          date = li.h5(class: 'grouped-list__group__heading')
-
+         #iterate over each day of transactions
          transactions_list_box = li.ol(class: 'grouped-list__group__items')
          transactions_list_box.lis.each do |li|
+           #get related data for transactions class object
            description = li.div(class: 'h6 overflow-ellipsis sub-title').text
            amountDebit = li.span(class: 'amount debit')
            amountCredit = li.span(class: 'amount credit')
            amountDebit.exists? == true ? amount = "-"+amountDebit.text : amount = "+"+amountCredit.text
-
+           #push object to array of transactions
            transactions.push(Transactions.new(date.text,description,amount,currency[0],name).to_hash)
          end
         end
-      else state = false
+      else tstate = false
       end
-      puts ("\n\n" )
-
+      puts ("\n" )
+      #define and create account object, include transactions array
       account = Accounts.new(name,currency[0],balance[1..-1],nature,transactions).to_hash
-      hashacc = {"accounts":[account]}
-      puts JSON.pretty_generate(hashacc)
+      #create and use hash in order to output the data in right format
+      hash = {"accounts":[account]}
+      #print the data in JSON format
+      puts JSON.pretty_generate(hash)
     end
+  #close the browser sesion
   browser.close
   end
-
-get_accounts_data
