@@ -1,5 +1,6 @@
 require 'watir'
 require 'json'
+require 'nokogiri'
 
 class Accounts
   attr_accessor :name, :currency, :balance, :nature, :transactions
@@ -34,8 +35,11 @@ class GetAccountsData
     browser = Watir::Browser.new :firefox
     browser.goto 'http://demo.bendigobank.com.au'
     browser.button(name: 'customer_type').click
+
+    page_html = Nokogiri::HTML.parse(browser.html)
     #parse accounts related data and iterate over it
     accounts_list = browser.ol(class: 'grouped-list__group__items')
+    page_html.to_css
     accounts_list.lis.each do |li|
       #get data for account class object
       name = li.div(class: '_3jAwGcZ7sr').text
