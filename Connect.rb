@@ -30,23 +30,16 @@ class Transactions < Accounts
 end
 
 class GetAccountsData
+
     Watir.logger.ignore :deprecations
     #navigate to webpage
     browser = Watir::Browser.new :firefox
     browser.goto 'http://demo.bendigobank.com.au'
     browser.button(name: 'customer_type').click
 
-    page_html = Nokogiri::HTML.parse(browser.html)
     #parse accounts related data and iterate over it
     accounts_list = browser.ol(class: 'grouped-list__group__items')
-    page_html.to_css
     accounts_list.lis.each do |li|
-      #get data for account class object
-      name = li.div(class: '_3jAwGcZ7sr').text
-      currency = li.dd(class: 'S3CFfX95_8').span(index: 1).text
-      balance = currency
-      nature = "credit_card"
-      transactions = Array[]
       #navigate to select last month for transactions
       li.a(class: 'g9Ab3g8sIZ').click #navigate to each account
       browser.i(class: 'ico-nav-bar-filter_16px').click
@@ -54,6 +47,16 @@ class GetAccountsData
       browser.ul(class: 'radio-group').li(index: 6).click
       browser.button(class: 'button--primary').click
       browser.a(class: '_2wUV-453gB').wait_until(&:present?)
+
+      account_object = Nokogiri::HTML.parse(browser.html)
+      #get data for account class object
+      name = account_object.at_css("div._3jAwGcZ7sr").text
+      currency = account_object.at_css("dd._1vKeQVO7xz").text
+      #currency = li.dd(class: 'S3CFfX95_8').span(index: 1).text
+      balance = currency
+      nature = "credit_card"
+      transactions = Array[]
+
       #parse transactions related data and iterate over it
       tstate = true
       if tstate == true
