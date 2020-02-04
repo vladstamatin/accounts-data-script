@@ -49,40 +49,42 @@ class GetAccountsData
       browser.a(class: '_2wUV-453gB').wait_until(&:present?)
 
       account_object = Nokogiri::HTML.parse(browser.html)
+
       #get data for account class object
-      name = account_object.at_css("div._3jAwGcZ7sr").text
-      currency = account_object.at_css("dd._1vKeQVO7xz").text
-      #currency = li.dd(class: 'S3CFfX95_8').span(index: 1).text
-      balance = currency
+      name = account_object.at_css("h2.yBcmat9coi").text
+      currency = "USD"
+      balance = account_object.at_css("div._2tzPNu1unf").text
       nature = "credit_card"
       transactions = Array[]
 
       #parse transactions related data and iterate over it
       tstate = true
       if tstate == true
-      transactions_list = browser.ol(class: 'grouped-list grouped-list--compact grouped-list--indent')
+      transactions_list = account_object.css('.grouped-list--indent')
+      #puts ("\n\n\n")
       end
-      if transactions_list.exists? == true
-        transactions_list.lis.each do |li|
+
+      if transactions_list != nil
+        transactions_list.css('.grouped-list__group').each do |li|
          #get data time for transactions made in one day
-         date = li.h5(class: 'grouped-list__group__heading')
+         date = li.css('.grouped-list__group__heading').text
          #iterate over each day of transactions
-         transactions_list_box = li.ol(class: 'grouped-list__group__items')
-         transactions_list_box.lis.each do |li|
-           #get related data for transactions class object
-           description = li.div(class: 'h6 overflow-ellipsis sub-title').text
-           amountDebit = li.span(class: 'amount debit')
-           amountCredit = li.span(class: 'amount credit')
-           amountDebit.exists? == true ? amount = "-"+amountDebit.text : amount = "+"+amountCredit.text
-           #push object to array of transactions
-           transactions.push(Transactions.new(date.text,description,amount,currency[0],name).to_hash)
-         end
+          transactions_list_box = li.css('.grouped-list__group__items')
+          transactions_list_box.css('._2EcJACN7jc').each do |li|
+            #get related data for transactions class object
+            description = li.css('.overflow-ellipsis').text
+            amountDebit = li.css('.lQBoxl_Y_x').text
+            amountCredit = li.css('._32o6RiLlUL').text
+            amountCredit == "" ? amount = "-"+amountDebit[20..-1] : amount = "+"+amountCredit[20..-1]
+            #push object to array of transactions
+            transactions.push(Transactions.new(date,description,amount,currency,name).to_hash)
+          end
         end
       else tstate = false
       end
       puts ("\n" )
       #define and create account object, include transactions array
-      account = Accounts.new(name,currency[0],balance[1..-1],nature,transactions).to_hash
+      account = Accounts.new(name,currency,balance,nature,transactions).to_hash
       #create and use hash in order to output the data in right format
       hash = {"accounts":[account]}
       #print the data in JSON format
