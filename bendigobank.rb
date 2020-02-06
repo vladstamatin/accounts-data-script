@@ -26,7 +26,7 @@ class Bendigobank
     parse_accounts(html)
   end
 
-  def self.fetch_transactions(account)
+  def self.fetch_transactions(accounts)
     date = Time.new().to_datetime
     datepast = date << 2
     if datepast.month < 10
@@ -41,19 +41,18 @@ class Bendigobank
       date = "0" + date.day.to_s + "/" + date.month.to_s + "/" + date.year.to_s
       datepast = "0" + datepast.day.to_s + "/" + datepast.month.to_s + "/" + datepast.year.to_s
     end
-     account.ol(class: "grouped-list__group__items").each do |li|
+     accounts.ol(class: "grouped-list__group__items").each do |li|
        li.a(class: 'g9Ab3g8sIZ').click
-       account.i(class: 'ico-nav-bar-filter_16px').click
-       account.a(class: 'panel--bordered__item').click
-       account.ul(class: 'radio-group').li(index: 8).click
-       account.text_field(name: 'toDate').set(date)
-       account.text_field(name: 'fromDate').set(datepast)
-       account.button(class: 'button--primary').click
-       account.button(class: 'button--primary').click
-       html = Nokogiri::HTML.fragment(account.div(class: "activity-container").html)
+       accounts.i(class: 'ico-nav-bar-filter_16px').click
+       accounts.a(class: 'panel--bordered__item').click
+       accounts.ul(class: 'radio-group').li(index: 8).click
+       accounts.text_field(name: 'toDate').set(date)
+       accounts.text_field(name: 'fromDate').set(datepast)
+       accounts.button(class: 'button--primary').click
+       accounts.button(class: 'button--primary').click
+       html = Nokogiri::HTML.fragment(accounts.div(class: "activity-container").html)
        transaction = Array[]
        parse_transactions(html,transaction)
-       #print transaction
      end
   end
 
@@ -66,8 +65,6 @@ class Bendigobank
       transactions = Array[]
       account = Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash
       #print account
-      hash = {"accounts":[account]}
-      puts JSON.pretty_generate(hash)
      end
   end
 

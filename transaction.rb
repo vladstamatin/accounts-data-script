@@ -1,4 +1,4 @@
-class Transactions < Accounts
+class Transactions
   attr_accessor :date, :description, :amount, :currency, :account_name
   def initialize(date,description,amount,currency,account_name)
     @date = date
