@@ -2,73 +2,78 @@ require 'watir'
 require 'json'
 require 'nokogiri'
 require 'date'
-require_relative 'account'
-require_relative 'transaction'
+require_relative 'account.rb'
+require_relative 'transaction.rb'
 
 class Bendigobank
 
   def self.execute
     connect
-    fetch_accounts(connect)
-    fetch_transactions(connect)
+    fetch_accounts
+    fetch_transactions
   end
 
   def self.connect
     Watir.logger.ignore :deprecations
-    browser = Watir::Browser.new :firefox
-    browser.goto 'http://demo.bendigobank.com.au'
-    browser.button(name: 'customer_type').click
-    return browser
+    @browser = Watir::Browser.new :firefox
+    @browser.goto 'http://demo.bendigobank.com.au'
+    @browser.button(name: 'customer_type').click
   end
 
-  def self.fetch_accounts(browser)
-    html = Nokogiri::HTML.fragment(browser.div(class: "_23LTBXgogQ").html)
+  def self.fetch_accounts
+    html = Nokogiri::HTML.fragment(@browser.ol(class: "grouped-list grouped-list--compact").html)
     parse_accounts(html)
   end
 
-  def self.fetch_transactions(accounts)
-    date = Time.new().to_datetime
-    datepast = date << 2
-    if datepast.month < 10
-      datepast = datepast.day.to_s + "/" + "0" + datepast.month.to_s + "/" + datepast.year.to_s
+  def self.fetch_transactions
+    to_date = Time.new().to_datetime
+    from_date = to_date << 2
+    if from_date.month < 10
+      from_date = from_date.day.to_s + "/" + "0" + from_date.month.to_s + "/" + from_date.year.to_s
     end
-    if date.month < 10 && date.day < 10
-      date = "0" + date.day.to_s + "/" + "0" + date.month.to_s + "/" + date.year.to_s
-      datepast = "0" + datepast.day.to_s + "/" + datepast.month.to_s + "/" + datepast.year.to_s
-    elsif date.month < 10
-      date = date.day.to_s + "/" + "0" + date.month.to_s + "/" + date.year.to_s
+    if to_date.month < 10 && to_date.day < 10
+      to_date = "0" + to_date.day.to_s + "/" + "0" + to_date.month.to_s + "/" + to_date.year.to_s
+      from_date = "0" + from_date.day.to_s + "/" + from_date.month.to_s + "/" + from_date.year.to_s
+    elsif to_date.month < 10
+      to_date = to_date.day.to_s + "/" + "0" + to_date.month.to_s + "/" + to_date.year.to_s
     elsif date.day < 10
-      date = "0" + date.day.to_s + "/" + date.month.to_s + "/" + date.year.to_s
-      datepast = "0" + datepast.day.to_s + "/" + datepast.month.to_s + "/" + datepast.year.to_s
+      to_date = "0" + to_date.day.to_s + "/" + to_date.month.to_s + "/" + to_date.year.to_s
+      from_date = "0" + from_date.day.to_s + "/" + from_date.month.to_s + "/" + from_date.year.to_s
     end
-     accounts.ol(class: "grouped-list__group__items").each do |li|
+    accounts = @browser
+     accounts.ol(class: "grouped-list grouped-list--compact").li(index: 0).ol(class: 'grouped-list__group__items').each do |li|
        li.a(class: 'g9Ab3g8sIZ').click
        accounts.i(class: 'ico-nav-bar-filter_16px').click
        accounts.a(class: 'panel--bordered__item').click
        accounts.ul(class: 'radio-group').li(index: 8).click
-       accounts.text_field(name: 'toDate').set(date)
-       accounts.text_field(name: 'fromDate').set(datepast)
+       accounts.text_field(name: 'toDate').set(to_date)
+       accounts.text_field(name: 'fromDate').set(from_date)
        accounts.button(class: 'button--primary').click
        accounts.button(class: 'button--primary').click
-       html = Nokogiri::HTML.fragment(accounts.div(class: "activity-container").html)
-       transaction = Array[]
-       parse_transactions(html,transaction)
+       while accounts.div(class: '_3Wd5wOSiEN').present? != true
+         if accounts.div(class: 'full-page-message').present? == true
+           break
+         end
+         accounts.scroll.to :bottom
+       end
+       html = Nokogiri::HTML.fragment(accounts.div(class: 'activity-container').html)
+       account_name = accounts.h2(class: 'yBcmat9coi').text
+       parse_transactions(html,account_name)
      end
   end
 
   def self.parse_accounts(html)
-     html.css("ol.grouped-list__group__items li").each do |li|
+     html.css('.grouped-list__group__items li').each do |li|
       name = li.css('._3jAwGcZ7sr').text
-      currency = "USD"
       balance = li.css('.S3CFfX95_8').text
+      currency = balance[19]
       nature = "credit_card"
       transactions = Array[]
-      account = Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash
-      #print account
+      @account = Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash
      end
   end
 
-  def self.parse_transactions(html,transaction)
+  def self.parse_transactions(html,account_name)
     html.css('.grouped-list--indent').css('.grouped-list__group').each do |li|
       date = li.css('.grouped-list__group__heading').text
       li.css('.grouped-list__group__items').css('._2EcJACN7jc').each do |li|
@@ -77,10 +82,9 @@ class Bendigobank
          amountDebit = li.css('.lQBoxl_Y_x').text
          amountCredit = li.css('._32o6RiLlUL').text
          amountCredit == "" ? amount = "-"+amountDebit[20..-1] : amount = "+"+amountCredit[20..-1]
-         transaction.push(Transactions.new(date,description,amount,"","").to_hash)
+         @transaction = Transactions.new(date,description,amount,"",account_name).to_hash
        end
     end
-
   end
 
 execute
