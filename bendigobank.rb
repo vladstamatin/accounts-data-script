@@ -6,6 +6,7 @@ require_relative 'account.rb'
 require_relative 'transaction.rb'
 
 class Bendigobank
+  URL = "http://demo.bendigobank.com.au"
 
   def self.execute
     connect
@@ -16,7 +17,7 @@ class Bendigobank
   def self.connect
     Watir.logger.ignore :deprecations
     @browser = Watir::Browser.new :firefox
-    @browser.goto 'http://demo.bendigobank.com.au'
+    @browser.goto URL
     @browser.button(name: 'customer_type').click
   end
 
@@ -40,24 +41,23 @@ class Bendigobank
       to_date = "0" + to_date.day.to_s + "/" + to_date.month.to_s + "/" + to_date.year.to_s
       from_date = "0" + from_date.day.to_s + "/" + from_date.month.to_s + "/" + from_date.year.to_s
     end
-    accounts = @browser
-     accounts.ol(class: "grouped-list grouped-list--compact").li(index: 0).ol(class: 'grouped-list__group__items').each do |li|
-       li.a(class: 'g9Ab3g8sIZ').click
-       accounts.i(class: 'ico-nav-bar-filter_16px').click
-       accounts.a(class: 'panel--bordered__item').click
-       accounts.ul(class: 'radio-group').li(index: 8).click
-       accounts.text_field(name: 'toDate').set(to_date)
-       accounts.text_field(name: 'fromDate').set(from_date)
-       accounts.button(class: 'button--primary').click
-       accounts.button(class: 'button--primary').click
-       while accounts.div(class: '_3Wd5wOSiEN').present? != true
-         if accounts.div(class: 'full-page-message').present? == true
+     @browser.ol(class: 'grouped-list__group__items').each do |li|
+       li.a(class: 'panel--hover').click
+       @browser.i(class: 'ico-nav-bar-filter_16px').click
+       @browser.a(class: 'panel--bordered__item').click
+       @browser.ul(class: 'radio-group').li(index: 8).click
+       @browser.text_field(name: 'toDate').set(to_date)
+       @browser.text_field(name: 'fromDate').set(from_date)
+       @browser.button(class: 'button--primary').click
+       @browser.button(class: 'button--primary').click
+       while @browser.div(class: '_3Wd5wOSiEN').present? != true
+         if @browser.div(class: 'full-page-message').present? == true
            break
          end
-         accounts.scroll.to :bottom
+         @browser.scroll.to :bottom
        end
-       html = Nokogiri::HTML.fragment(accounts.div(class: 'activity-container').html)
-       account_name = accounts.h2(class: 'yBcmat9coi').text
+       html = Nokogiri::HTML.fragment(@browser.div(class: 'activity-container').html)
+       account_name = @browser.h2(class: 'yBcmat9coi').text
        parse_transactions(html,account_name)
      end
   end
@@ -77,15 +77,14 @@ class Bendigobank
     html.css('.grouped-list--indent').css('.grouped-list__group').each do |li|
       date = li.css('.grouped-list__group__heading').text
       li.css('.grouped-list__group__items').css('._2EcJACN7jc').each do |li|
-         #get related data for transactions class object
          description = li.css('.sub-title').text
          amountDebit = li.css('.lQBoxl_Y_x').text
          amountCredit = li.css('._32o6RiLlUL').text
          amountCredit == "" ? amount = "-"+amountDebit[20..-1] : amount = "+"+amountCredit[20..-1]
-         @transaction = Transactions.new(date,description,amount,"",account_name).to_hash
+         currency = amountDebit[19] || amountCredit[19]
+         @transaction = Transactions.new(date,description,amount,currency,account_name).to_hash
        end
     end
   end
-
 execute
 end
