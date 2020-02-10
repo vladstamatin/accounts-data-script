@@ -30,7 +30,7 @@ class Bendigobank
   def self.fetch_transactions
     to_date = Time.new().to_datetime
     from_date = to_date << 2
-    
+
     to_date = format_date(to_date)
     from_date = format_date(from_date)
 
@@ -60,6 +60,8 @@ class Bendigobank
   end
 
   def self.parse_accounts(html)
+    @accounts = []
+    
      html.css('.grouped-list__group__items li').each do |li|
       name = li.css('._3jAwGcZ7sr').text
       balance = li.css('.S3CFfX95_8').text
@@ -67,11 +69,14 @@ class Bendigobank
       nature = name.split.last
       transactions = nil
 
-      @accounts = Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash
+      @accounts.push(Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash)
      end
+     return @accounts
   end
 
   def self.parse_transactions(html,account_name)
+    @transaction = []
+
     html.css('.grouped-list--indent').css('.grouped-list__group').each do |li|
       date = li.css('.grouped-list__group__heading').text
       li.css('.grouped-list__group__items li').each do |li|
@@ -81,9 +86,10 @@ class Bendigobank
          amountCredit == "" ? amount = "-"+amountDebit[20..-1] : amount = "+"+amountCredit[20..-1]
          currency = amountDebit[19] || amountCredit[19]
 
-         @transaction = Transactions.new(date,description,amount,currency,account_name).to_hash
+         @transaction.push(Transactions.new(date,description,amount,currency,account_name).to_hash)
        end
     end
+    return @transaction
   end
 
   def self.format_date(date)
