@@ -43,7 +43,7 @@ class Bendigobank
       @browser.text_field(name: 'fromDate').set(from_date)
       @browser.button(class: 'button--primary').click
       @browser.button(class: 'button--primary').click
-      until @browser.div(class: '_3Wd5wOSiEN').present?
+      until @browser.p(text: "No more activity").present?
         if @browser.div(class: 'full-page-message').present?
           break
         end
@@ -61,15 +61,16 @@ class Bendigobank
 
   def self.parse_accounts(html)
     @accounts = []
-    
+
      html.css('.grouped-list__group__items li').each do |li|
       name = li.css('._3jAwGcZ7sr').text
       balance = li.css('.S3CFfX95_8').text
       currency = balance[19]
+      balance = balance[20..-1].delete ','
       nature = name.split.last
-      transactions = nil
+      transactions = []
 
-      @accounts.push(Accounts.new(name,currency,balance[20..-1],nature,transactions).to_hash)
+      @accounts.push(Accounts.new(name,currency,balance.to_f,nature,transactions).to_hash)
      end
      return @accounts
   end
@@ -83,10 +84,11 @@ class Bendigobank
          description = li.css('.sub-title').text
          amountDebit = li.css('.lQBoxl_Y_x').text
          amountCredit = li.css('._32o6RiLlUL').text
-         amountCredit == "" ? amount = "-"+amountDebit[20..-1] : amount = "+"+amountCredit[20..-1]
+         amountCredit == "" ? amount = "-" + amountDebit[20..-1] : amount = "+" + amountCredit[20..-1]
+         amount = amount.delete ','
          currency = amountDebit[19] || amountCredit[19]
 
-         @transaction.push(Transactions.new(date,description,amount,currency,account_name).to_hash)
+         @transaction.push(Transactions.new(date,description,amount.to_f,currency,account_name).to_hash)
        end
     end
     return @transaction

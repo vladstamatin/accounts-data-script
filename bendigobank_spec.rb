@@ -6,8 +6,8 @@ require_relative 'bendigobank.rb'
 
 describe Bendigobank do
 
-  html_account = Nokogiri::HTML(File.read('/home/vlad/Documents/test_task/accounts.html'))
-  html_transaction = Nokogiri::HTML(File.read('/home/vlad/Documents/test_task/transactions.html'))
+  html_account = Nokogiri::HTML(File.read('accounts.html'))
+  html_transaction = Nokogiri::HTML(File.read('transactions.html'))
 
   accounts = Bendigobank.parse_accounts(html_account)
   transactions = Bendigobank.parse_transactions(html_transaction,"account_name")
@@ -30,9 +30,9 @@ describe Bendigobank do
         {
           "name"=>"Demo Everyday Account",
           "currency"=>"$",
-          "balance"=>"1,860.15",
+          "balance"=>1860.15,
           "nature"=>"Account",
-          "transactions"=>nil
+          "transactions"=>[]
         }
       )
     end
@@ -44,7 +44,7 @@ describe Bendigobank do
         {
           "date"=>"February 7, 2020",
           "description"=>"00001669907602",
-          "amount"=>"-34.00",
+          "amount"=>-34.00,
           "currency"=>"$",
           "account_name"=>"account_name"
         }
