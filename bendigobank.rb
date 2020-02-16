@@ -8,26 +8,26 @@ require_relative 'transaction.rb'
 class Bendigobank
   URL = "http://demo.bendigobank.com.au"
 
-  def self.execute
+  def execute
     connect
     fetch_accounts
     fetch_transactions
     show_output
   end
 
-  def self.connect
+  def connect
     Watir.logger.ignore :deprecations
     @browser = Watir::Browser.new :firefox
     @browser.goto URL
     @browser.button(name: 'customer_type').click
   end
 
-  def self.fetch_accounts
+  def fetch_accounts
     html = Nokogiri::HTML.fragment(@browser.ol(class: "grouped-list grouped-list--compact").html)
     parse_accounts(html)
   end
 
-  def self.fetch_transactions
+  def fetch_transactions
     to_date = Time.new().to_datetime
     from_date = to_date << 2
 
@@ -59,7 +59,7 @@ class Bendigobank
      end
   end
 
-  def self.parse_accounts(html)
+  def parse_accounts(html)
     @accounts = []
 
      html.css('.grouped-list__group__items li').each do |li|
@@ -75,7 +75,7 @@ class Bendigobank
      return @accounts
   end
 
-  def self.parse_transactions(html,account_name)
+  def parse_transactions(html,account_name)
     @transaction = []
 
     html.css('.grouped-list--indent').css('.grouped-list__group').each do |li|
@@ -94,7 +94,7 @@ class Bendigobank
     return @transaction
   end
 
-  def self.format_date(date)
+  def format_date(date)
     case
     when date.month < 10 && date.day < 10
       date = "0" + date.day.to_s + "/" + "0" + date.month.to_s + "/" + date.year.to_s
@@ -107,9 +107,12 @@ class Bendigobank
     end
   end
 
-  def self.show_output
+  def show_output
     hash = {"accounts":@accounts}
     puts JSON.pretty_generate(hash)
   end
-execute
+
 end
+
+bendigobank = Bendigobank.new
+bendigobank.execute
